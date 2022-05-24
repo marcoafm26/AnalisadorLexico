@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Scanner;
 
 public class StopWords implements Analisar {
@@ -17,17 +18,22 @@ public class StopWords implements Analisar {
     }
     @Override
     public String analisar(String texto) {
-        return null;
+        if(stopWords.contains(texto)) {
+            return texto;
+        }
+       return null;
     }
+
 
     public void init() throws FileNotFoundException {
         File arquivo = new File("stopwords.txt");
         Scanner ler = new Scanner(arquivo);
         for (Scanner it = ler; it.hasNext(); ) {
             String word = it.next();
-            stopWords.add(word);
+            stopWords.add(word.toLowerCase());
         }
     }
+
 
     public void setStopWords(List<String> stopWords){
         this.stopWords = stopWords;
