@@ -109,6 +109,8 @@ cima
 cinco
 claramente
 claro
+clique
+clicar
 coisa
 coisas
 coloca
@@ -578,9 +580,6 @@ primeira
 primeiras
 primeiro
 primeiros
-pro
-problema
-problemas
 procurado
 promeiro
 promove

@@ -38,7 +38,7 @@ public class KeyWord implements Analisar{
 
     public enum KeyWords{
         webcam,mouse,gamer,teclado,headset,fone,mousepad,drive,programa,como,quero,gostaria,poderia,qual,
-        quanto,queria,ter,quebrar,ligar,desligar,queimar,executar,baixar,atualizar,fechar,abrir,problemas,
+        quanto,queria,ter,quebrar,ligar,desligar,queimar,executar,baixar,atualizar,fechar,abrir,problema,
         funcionar,comprar,reembolsar,encontrar,trocar,garantia,suporte,barato,caro
     }
     public enum Equipamento{
