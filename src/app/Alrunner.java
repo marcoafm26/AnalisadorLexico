@@ -14,6 +14,7 @@ public class Alrunner {
    static TabelaSimbolos ts = new TabelaSimbolos();
    static KeyWord keyWord = new KeyWord();
    static Token token = new Token();
+   static ArquivoInvertido ai = new ArquivoInvertido();
 
    //Foi utilizada a biblioteca snowball para o tratamento dos lexemas
    //Pode ser feito o download no dominio http://snowball.tartarus.org/download.html
@@ -23,15 +24,18 @@ public class Alrunner {
         //Frase padrao do chatbot
         System.out.println("Sou a assistente virtual da Logitech, em que posso ajudar? ");
 
+
         //Exemplo de frase inserida pelo usuario, pode ser qualquer uma
         String texto = ("Qual mouse, : têm um bom custo-benefício beneficio custo qual? ª ");
-        texto = ler.nextLine();
+        //texto = ler.nextLine();
+        texto="Qual mouse, : têm um bom custo-benefício beneficio custo qual? ª ";
         while(sintaxe.analisar(texto) == null){
             System.out.println(sintaxe.analisar(texto));
             texto = ler.next();
         }
         try {
             sw.init();
+            ai.povoar(sw);
             executar(texto);
         }catch (FileNotFoundException e){
             throw new FileNotFoundException("Arquivo não encontrado.");
@@ -60,7 +64,7 @@ public class Alrunner {
             }
 
         }
-        imprimir(sb);
+       // imprimir(sb);
     }
 
     public static void imprimir(StringBuilder sb){
