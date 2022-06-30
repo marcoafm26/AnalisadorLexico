@@ -17,10 +17,13 @@ public class Alrunner {
    static Token token = new Token();
    static ArquivoInvertido ai = new ArquivoInvertido();
 
+   // variavel que controla se o arquivo mudou ou nao, true para mudou e false para não mudou
+   static boolean change = true;
+
    //Foi utilizada a biblioteca snowball para o tratamento dos lexemas
    //Pode ser feito o download no dominio http://snowball.tartarus.org/download.html
    // Repare que na saída da frase processada tem valores repetidos mas na listas de tokens não
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws IOException {
         Scanner ler = new Scanner(System.in);
         //Frase padrao do chatbot
         System.out.println("Sou a assistente virtual da Logitech, em que posso ajudar? ");
@@ -28,25 +31,25 @@ public class Alrunner {
 
         //Exemplo de frase inserida pelo usuario, pode ser qualquer uma
         String texto = ("Qual mouse, : têm um bom custo-benefício beneficio custo qual? ª ");
-        //texto = ler.nextLine();
-        texto="Qual mouse, : têm um bom custo-benefício beneficio custo qual? ª ";
-        while(sintaxe.analisar(texto) == null){
-            System.out.println(sintaxe.analisar(texto));
-            texto = ler.next();
+
+        // se o arquivo tiver mudado ele refaz o processo de povoamento
+        if (change)
+            ai.povoar();
+        else
+            ai.dataReader();
+        // inicializa as stopwords
+        sw.init();
+
+        while (!(texto = ler.nextLine()).equals("Sair") ||sintaxe.analisar(texto) == null){
+                executar(texto);
         }
-        try {
-            sw.init();
-            ai.povoar(sw);
-            executar(texto);
-        }catch (FileNotFoundException e){
-            throw new FileNotFoundException("Arquivo não encontrado.");
-        } catch (IOException e) {
-            throw new RuntimeException("Erro ao gravar o arquivo.");
-        }
+            ai.dataWriter();
+        System.out.println("Até a próxima!!!");
 
     }
 
     public static void executar(String texto) {
+       // token.tokens.clear();
         texto = texto.replaceAll("\\p{Punct}", " ");
         texto = Normalizer.normalize(texto, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
         StringBuilder sb = new StringBuilder();
@@ -56,18 +59,22 @@ public class Alrunner {
 
             if (keyWord.analisar(word) != null && sw.analisar(word) == null) {
                     sb.append(keyWord.analisar(word)).append(" ");
-                    token.analisar(keyWord.analisar(word));
+                    token.analisar(lexemas.analisar(keyWord.analisar(word)));
             }else if(ts.analisar(lexemas.analisar(word))== null && ts.analisar(word)== null && sw.analisar(word) == null){
                     ts.addSymbolTable(lexemas.analisar(word));
                     sb.append(lexemas.analisar(word)).append(" ");
-                token.analisar(lexemas.analisar(word));
+                    token.analisar(lexemas.analisar(word));
             } else if (lexemas.analisar(word) != null && sw.analisar(word) == null) {
                 sb.append(lexemas.analisar(word)).append(" ");
                 lexemas.analisar(lexemas.analisar(word));
             }
 
         }
-       // imprimir(sb);
+        String resposta = ai.tfidf(token.tokens);
+        if(resposta != null)
+            System.out.println(resposta);
+        else
+            System.out.println("Nao entendi, refaca a pergunta de uma forma diferente");
     }
 
     public static void imprimir(StringBuilder sb){

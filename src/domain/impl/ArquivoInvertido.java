@@ -1,6 +1,7 @@
 package domain.impl;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.text.Normalizer;
 import java.util.*;
 
@@ -10,45 +11,13 @@ public class ArquivoInvertido {
     static TabelaSimbolos ts = new TabelaSimbolos();
     static KeyWord keyWord = new KeyWord();
     static Token token = new Token();
+    static StopWords sw = new StopWords();
 
     Map<String,List<Index>> arqInvertido;
+    Map<Integer,String> respostas = new HashMap<>();
 
     public ArquivoInvertido(){
         arqInvertido = new HashMap<>();
-    }
-
-    public void povoar (StopWords sw) throws IOException {
-
-        File arquivo = new File("respostas.txt");
-        Scanner inArchive = new Scanner(arquivo);
-        Map<Integer,String> resposta = new HashMap<>();
-        int position = 0;
-        for (Scanner temp=inArchive; temp.hasNext() ;) {
-
-            String texto = temp.nextLine();
-            resposta.put(position, texto);
-            String[] words = textFormat(texto);
-
-            for (String word : words) {
-                if (sw.analisar(word) == null) {
-                    if (keyWord.analisar(word) != null && sw.analisar(word) == null) {
-                        token.analisar(lexemas.analisar(keyWord.analisar(word))); // tirar lexemas se nao quiser que aplique a funcao nas keywords
-                    } else if (ts.analisar(lexemas.analisar(word)) == null && ts.analisar(word) == null && sw.analisar(word) == null) {
-                        token.analisar(lexemas.analisar(word));
-                    }
-
-               // System.out.println(token.tokens.toString());
-                for (String key : token.tokens) {
-                    addKey(key, position);
-                }
-                token.tokens.clear();
-            }
-            }
-            position++;
-        }
-                dataWriter();
-                dataReader();
-                imprimir(arqInvertido);
     }
     private class Index implements Comparable<Index>{
         int index;
@@ -74,6 +43,63 @@ public class ArquivoInvertido {
         }
     }
 
+    public void povoar () throws IOException {
+        sw.init();
+        File arquivo = new File("respostas.txt");
+        Scanner inArchive = new Scanner(arquivo);
+
+        int position = 0;
+        for (Scanner temp=inArchive; temp.hasNext() ;) {
+
+            String texto = temp.nextLine();
+            fillResp("respostas.txt");
+            String[] words = textFormat(texto);
+
+            for (String word : words) {
+                if (sw.analisar(word) == null) {
+                    if (keyWord.analisar(word) != null && sw.analisar(word) == null) {
+                        token.analisar(lexemas.analisar(keyWord.analisar(word))); // tirar lexemas se nao quiser que aplique a funcao nas keywords
+                    } else if (ts.analisar(lexemas.analisar(word)) == null && ts.analisar(word) == null && sw.analisar(word) == null) {
+                        token.analisar(lexemas.analisar(word));
+                    }
+
+                for (String key : token.tokens) {
+                    addKey(key, position);
+                }
+                token.tokens.clear();
+                }
+            }
+            position++;
+        }
+                dataWriter();
+               // imprimir(arqInvertido);
+    }
+    public String tfidf(List<String> tokens){
+        List<String> localTokens = new LinkedList<>(tokens);
+        List<Integer> usages = new LinkedList<>(Collections.nCopies(respostas.size(),0));
+        for (String token: localTokens) {
+            if(arqInvertido.get(token) != null) {
+                for (Index ind : arqInvertido.get(token)) {
+                    usages.set(ind.index, usages.get(ind.index) + ind.usage);
+                }
+            }
+        }
+        int position = 0;
+        for (int i = 0; i < usages.size()-1; i++) {
+            if (usages.get(position) < usages.get(i+1))
+                position = i+1;
+            else if(usages.get(position) == usages.get(i+1)){
+                Random random = new Random();
+                int ran = random.nextInt(0,2);
+                if (ran != 1)
+                  position = i+1;
+            }
+        }
+        int i = 0;
+        return respostas.get(position);
+    }
+
+
     public void addKey(String word,int index){
         if (arqInvertido.containsKey(word)){
             for (Index key: arqInvertido.get(word)) {
@@ -91,7 +117,6 @@ public class ArquivoInvertido {
             arqInvertido.put(word,list);
         }
     }
-
     public String[] textFormat(String texto){
         texto = texto.toLowerCase();
         texto = texto.replaceAll("\\p{Punct}", "");
@@ -99,18 +124,23 @@ public class ArquivoInvertido {
         String[] words = texto.trim().split("[,.!?'@_] *| +");
         return words;
     }
+    public void fillResp(String path) throws FileNotFoundException {
+        File resposta = new File("respostas.txt");
+        Scanner inArchive = new Scanner(resposta);
+        int position = 0;
+        for (Scanner temp=inArchive; temp.hasNext() ;) {
+            respostas.put(position,temp.nextLine());
+            position++;
+        }
 
-    public void imprimir(Map<String,List<Index>> arqInvertido){
-        arqInvertido.entrySet().forEach(key ->{
-            System.out.println(key.getKey() + " = " + key.getValue().toString());
-        });
     }
-
     public void dataReader()throws IOException{
         arqInvertido.clear();
-
+        fillResp("respostas.txt");
         File arquivo = new File("arquivo.txt");
         Scanner inArchive = new Scanner(arquivo);
+
+
         for (Scanner temp=inArchive; temp.hasNext() ;) {
 
             String key = temp.next();
@@ -125,8 +155,6 @@ public class ArquivoInvertido {
             arqInvertido.put(key,list);
         }
     }
-
-
     public void dataWriter() throws IOException {
         FileWriter fw = new FileWriter("arquivo.txt");
         PrintWriter printWriter = new PrintWriter(fw);
@@ -135,5 +163,10 @@ public class ArquivoInvertido {
             printWriter.println(key.getKey() +" "+key.getValue().toString());
         });
         printWriter.close();
+    }
+    public void imprimir(Map<String,List<Index>> arqInvertido){
+        arqInvertido.entrySet().forEach(key ->{
+            System.out.println(key.getKey() + " = " + key.getValue().toString());
+        });
     }
 }
