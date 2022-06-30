@@ -3,6 +3,7 @@ package app;
 import domain.impl.*;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Scanner;
@@ -39,6 +40,8 @@ public class Alrunner {
             executar(texto);
         }catch (FileNotFoundException e){
             throw new FileNotFoundException("Arquivo não encontrado.");
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao gravar o arquivo.");
         }
 
     }

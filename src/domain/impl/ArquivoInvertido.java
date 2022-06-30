@@ -1,9 +1,9 @@
 package domain.impl;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.text.Normalizer;
 import java.util.*;
+
 
 public class ArquivoInvertido {
     static Lexemas lexemas = new Lexemas();
@@ -17,9 +17,9 @@ public class ArquivoInvertido {
         arqInvertido = new HashMap<>();
     }
 
-    public void povoar (StopWords sw) throws FileNotFoundException {
+    public void povoar (StopWords sw) throws IOException {
 
-        File arquivo = new File("arquivo.txt");
+        File arquivo = new File("respostas.txt");
         Scanner inArchive = new Scanner(arquivo);
         Map<Integer,String> resposta = new HashMap<>();
         int position = 0;
@@ -32,7 +32,7 @@ public class ArquivoInvertido {
             for (String word : words) {
                 if (sw.analisar(word) == null) {
                     if (keyWord.analisar(word) != null && sw.analisar(word) == null) {
-                        token.analisar(lexemas.analisar(keyWord.analisar(word)));
+                        token.analisar(lexemas.analisar(keyWord.analisar(word))); // tirar lexemas se nao quiser que aplique a funcao nas keywords
                     } else if (ts.analisar(lexemas.analisar(word)) == null && ts.analisar(word) == null && sw.analisar(word) == null) {
                         token.analisar(lexemas.analisar(word));
                     }
@@ -46,9 +46,11 @@ public class ArquivoInvertido {
             }
             position++;
         }
-            gravarArq(arqInvertido);
+                dataWriter();
+                dataReader();
+                imprimir(arqInvertido);
     }
-    private class Index{
+    private class Index implements Comparable<Index>{
         int index;
         int usage=0;
 
@@ -59,7 +61,16 @@ public class ArquivoInvertido {
 
         @Override
         public String toString(){
-            return "Indice :" + this.index + "\t" + "Usages: " + this.usage;
+            return "Index:" + " "+ this.index + " Usages: "+ this.usage;
+        }
+
+        @Override
+        public int compareTo(Index o) {
+            if(this.index > o.index)
+                return -1;
+            else if(this.index < o.index)
+                return 1;
+            return 0;
         }
     }
 
@@ -89,9 +100,40 @@ public class ArquivoInvertido {
         return words;
     }
 
-    public void gravarArq(Map<String,List<Index>> arqInvertido){
+    public void imprimir(Map<String,List<Index>> arqInvertido){
         arqInvertido.entrySet().forEach(key ->{
             System.out.println(key.getKey() + " = " + key.getValue().toString());
         });
+    }
+
+    public void dataReader()throws IOException{
+        arqInvertido.clear();
+
+        File arquivo = new File("arquivo.txt");
+        Scanner inArchive = new Scanner(arquivo);
+        for (Scanner temp=inArchive; temp.hasNext() ;) {
+
+            String key = temp.next();
+            String texto = temp.nextLine();
+            texto = texto.replaceAll("[a-zA-Z,:\\]\\[]","");
+            String[] words = texto.trim().split("[,.!?'@_] *| +");
+            List<Index> list = new LinkedList<>();
+
+            for (int i = 0; i < words.length; i=i+2) {
+                list.add(new Index(Integer.parseInt(words[i]),Integer.parseInt(words[i+1])));
+            }
+            arqInvertido.put(key,list);
+        }
+    }
+
+
+    public void dataWriter() throws IOException {
+        FileWriter fw = new FileWriter("arquivo.txt");
+        PrintWriter printWriter = new PrintWriter(fw);
+        arqInvertido.entrySet().forEach(key->{
+            key.getValue().stream().sorted();
+            printWriter.println(key.getKey() +" "+key.getValue().toString());
+        });
+        printWriter.close();
     }
 }
